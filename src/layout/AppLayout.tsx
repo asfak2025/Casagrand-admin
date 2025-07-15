@@ -26,7 +26,7 @@ const LayoutContent: React.FC = () => {
     const token=localStorage.getItem("token")
     if (!token) {
       console.log("Checking token in localStorage");
-      navigate("/");
+      // navigate("/");
     }
     const roleScreen = accessRoles.find((item: AccessRole) => item.pathName === location.pathname);
 
