@@ -1,17 +1,17 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Table from '../../components/tables/table';
 import { TableCell, TableRow } from '../../components/ui/table';
 import StatusBadge from './Status';
+import Switch from '../form/switch/Switch';
+import ConfirmModal from '../Modal/confirmModal';
 
-// Organization type for the new structure
 export type Organization = {
   orgId: string;
   orgName: string;
   orgStatus: string;
 };
 
-// Keep the existing User type for backward compatibility
 export type User = {
   orgId: string;
   companyName: string;
@@ -26,34 +26,133 @@ interface UserTableProps {
   userData?: User[];
   orgData?: Organization[];
   onRowClick?: (user: User | Organization) => void;
+  onToggleStatus?: (orgId: string, newStatus: 'ACTIVE' | 'INACTIVE') => void;
 }
 
-const UserTable: React.FC<UserTableProps> = ({ userData, orgData, onRowClick }) => {
+const UserTable: React.FC<UserTableProps> = ({
+  userData,
+  orgData,
+  onRowClick,
+  onToggleStatus,
+}) => {
   const navigate = useNavigate();
 
-  const handleRowClick = (item: User | Organization) => {
+  const [localOrgs, setLocalOrgs] = useState<Organization[]>(orgData || []);
+  const [switchStates, setSwitchStates] = useState<Record<string, boolean>>({});
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [pendingOrgId, setPendingOrgId] = useState<string | null>(null);
+  const [pendingNewStatus, setPendingNewStatus] = useState<'ACTIVE' | 'INACTIVE'>('INACTIVE');
+
+
+
+  useEffect(() => {
+    if (orgData) {
+      setLocalOrgs(orgData);
+      const initialStates: Record<string, boolean> = {};
+      orgData.forEach(org => {
+        initialStates[org.orgId] = org.orgStatus === 'ACTIVE';
+      });
+      setSwitchStates(initialStates);
+    }
+  }, [orgData]);
+
+
+  const handleToggleClick = (checked: boolean, orgId: string) => {
+    setPendingOrgId(orgId);
+    setPendingNewStatus(checked ? 'ACTIVE' : 'INACTIVE');
+    setConfirmModalOpen(true);
+  };
+
+ const confirmToggle = () => {
+    if (pendingOrgId) {
+      setSwitchStates(prev => ({
+        ...prev,
+        [pendingOrgId]: pendingNewStatus === 'ACTIVE'
+      }));
+
+      setLocalOrgs(prev =>
+        prev.map(org =>
+          org.orgId === pendingOrgId ? { ...org, orgStatus: pendingNewStatus } : org
+        )
+      );
+
+      onToggleStatus?.(pendingOrgId, pendingNewStatus);
+    }
+
+    setConfirmModalOpen(false);
+    setPendingOrgId(null);
+  };
+
+  const cancelToggle = () => {
+    setConfirmModalOpen(false);
+    setPendingOrgId(null);
+  };
+
+
+
+  const handleUserRowClick = (item: User | Organization) => {
     if (onRowClick) {
       onRowClick(item);
     } else {
-      // Default behavior
-      localStorage.setItem("orgId", item.orgId);
-      localStorage.setItem("searchStr", item.orgId);
-      navigate("/userbyid", { state: { orgId: item.orgId } });
-      console.log("Processing row:", item.orgId);
+      localStorage.setItem('orgId', item.orgId);
+      localStorage.setItem('searchStr', item.orgId);
+      navigate('/userbyid', { state: { orgId: item.orgId } });
     }
   };
 
-  // Determine which data to use and what type of table to render
-  const isOrgData = orgData && orgData.length > 0;
-  const dataToRender = isOrgData ? orgData : (userData || []);
+  
+  const handleOrgRowClick = (item: User | Organization) => {
+    if (onRowClick) {
+      onRowClick(item);
+    } else {
+      localStorage.setItem('orgId', item.orgId);
+      localStorage.setItem('searchStr', item.orgId);
+      navigate('/orgbyid', { state: { orgId: item.orgId } });
+    }
+  };
 
-  const renderUserRow = (row: Record<string, any>, rowIndex: number) => {
-    const user = row as User;
-    
+  const renderOrgRow = (row: Record<string, any>, rowIndex: number) => {
+    const org = row as Organization;
+
     return (
       <TableRow
         key={rowIndex}
-        onClick={() => handleRowClick(user)}
+        onClick={() => handleOrgRowClick(org)}
+        className="hover:bg-blue-50 transition-colors duration-150 cursor-pointer border-b border-gray-100"
+      >
+        <TableCell className="px-6 py-4 text-start text-sm font-medium text-gray-900 hover:text-blue-600">
+          {org.orgId}
+        </TableCell>
+        <TableCell className="px-6 py-4 text-start text-sm text-gray-700 hover:text-blue-600">
+          {org.orgName}
+        </TableCell>
+        <TableCell className="px-6 py-4 text-start text-sm text-gray-700">
+          <StatusBadge status={org.orgStatus} />
+        </TableCell>
+        <TableCell className="px-6 py-4 text-start text-sm text-gray-700">
+          <div onClick={(e) => e.stopPropagation()}>
+            <Switch
+              label=""
+              color="blue"
+              disabled={false}
+              checked={switchStates[org.orgId] || false} 
+              onChange={(checked) => handleToggleClick(checked, org.orgId)}
+            />
+
+
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  const renderUserRow = (row: Record<string, any>, rowIndex: number) => {
+    const user = row as User;
+
+    return (
+      <TableRow
+        key={rowIndex}
+        onClick={() => handleUserRowClick(user)}
         className="hover:bg-blue-50 transition-colors duration-150 cursor-pointer border-b border-gray-100"
       >
         <TableCell className="px-6 py-4 text-start text-sm font-medium text-gray-900 hover:text-blue-600">
@@ -75,46 +174,28 @@ const UserTable: React.FC<UserTableProps> = ({ userData, orgData, onRowClick }) 
     );
   };
 
-  const renderOrgRow = (row: Record<string, any>, rowIndex: number) => {
-    const org = row as Organization;
-    
-    return (
-      <TableRow
-        key={rowIndex}
-        onClick={() => handleRowClick(org)}
-        className="hover:bg-blue-50 transition-colors duration-150 cursor-pointer border-b border-gray-100"
-      >
-        <TableCell className="px-6 py-4 text-start text-sm font-medium text-gray-900 hover:text-blue-600">
-          {org.orgId}
-        </TableCell>
-        <TableCell className="px-6 py-4 text-start text-sm text-gray-700 hover:text-blue-600">
-          {org.orgName}
-        </TableCell>
-        <TableCell className="px-6 py-4 text-start text-sm text-gray-700">
-          <StatusBadge status={org.orgStatus} />
-        </TableCell>
-      </TableRow>
-    );
-  };
-
-  if (isOrgData) {
-    return (
-      <Table
-        header={["Org ID", "Org Name", "Status"]}
-        data={dataToRender}
-        renderRow={renderOrgRow}
-        className="enhanced-table"
-      />
-    );
-  }
+  const isOrgData = orgData && orgData.length > 0;
+  const dataToRender = isOrgData ? localOrgs : userData || [];
 
   return (
-    <Table
-      header={["Org ID", "Company Name", "Email", "Phone", "Status"]}
-      data={dataToRender}
-      renderRow={renderUserRow}
-      className="enhanced-table"
-    />
+    <>
+      <Table
+        header={
+          isOrgData
+            ? ['Org ID', 'Org Name', 'Status', 'Action']
+            : ['Org ID', 'Company Name', 'Email', 'Phone', 'Status']
+        }
+        data={dataToRender}
+        renderRow={isOrgData ? renderOrgRow : renderUserRow}
+        className="enhanced-table"
+      />
+      <ConfirmModal
+        isOpen={confirmModalOpen}
+        message={`Are you sure you want to ${pendingNewStatus === 'ACTIVE' ? 'activate' : 'deactivate'} this organization?`}
+        onCancel={cancelToggle}
+        onConfirm={confirmToggle}
+      />
+    </>
   );
 };
 

@@ -14,11 +14,6 @@ export type Organization = {
 const initialData: Organization[] = [
   { orgId: "1234567890", orgName: "Casagrand", orgStatus: "ACTIVE" },
   { orgId: "1234567891", orgName: "TVK", orgStatus: "INACTIVE" },
-//   ...Array.from({ length: 12 }, (_, i) => ({
-//     orgId: `ORG-${i + 1}`,
-//     orgName: `Test Org ${i + 1}`,
-//     orgStatus: i % 2 === 0 ? "ACTIVE" : "INACTIVE",
-//   }))
 ];
 
 const Organization: React.FC = () => {
@@ -44,37 +39,6 @@ const Organization: React.FC = () => {
     handleSearch();
     }, [statusFilter]);
 
-//   const handleSearch = async (
-//     e?: React.MouseEvent | React.KeyboardEvent
-//   ): Promise<void> => {
-//     if (e) e.preventDefault();
-
-//     const trimmedTerm = searchTerm.trim();
-//     if (!trimmedTerm) {
-//       setOrganizations(initialData);
-//       setCurrentPage(1);
-//       return;
-//     }
-
-//     setLoading(true);
-//     setError('');
-
-//     try {
-//       await new Promise(resolve => setTimeout(resolve, 300)); // simulate delay
-//       const filtered = initialData.filter(org =>
-//         org.orgId.toLowerCase().includes(trimmedTerm.toLowerCase()) ||
-//         org.orgName.toLowerCase().includes(trimmedTerm.toLowerCase())
-//       );
-
-//       setOrganizations(filtered);
-//       setCurrentPage(1);
-//       localStorage.setItem('searchStr', trimmedTerm);
-//     } catch (err) {
-//       setError('Search failed. Please try again.');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
   const handleSearch = async (
     e?: React.MouseEvent | React.KeyboardEvent
     ): Promise<void> => {
@@ -123,19 +87,32 @@ const Organization: React.FC = () => {
 
   const handleCreateSubmit = async (
     newOrg: Omit<Organization, 'orgId'>
-  ): Promise<void> => {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const newId = Date.now().toString();
-      const newOrganization: Organization = { orgId: newId, ...newOrg };
-      const updated = [newOrganization, ...organizations];
-      setOrganizations(updated);
-      setIsCreateModalOpen(false);
-      setCurrentPage(1);
-    } catch (err) {
-      setError('Failed to create organization.');
-    }
+    ): Promise<void> => {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const newId = Date.now().toString();
+        const newOrganization: Organization = { orgId: newId, ...newOrg };
+        const updated = [newOrganization, ...organizations];
+        setOrganizations(updated);
+        setIsCreateModalOpen(false);
+        setCurrentPage(1);
+      } catch (err) {
+        setError('Failed to create organization.');
+      }
+    };
+
+  const handleToggleStatus = (orgId: string, newStatus: 'ACTIVE' | 'INACTIVE') => {
+    setOrganizations((prev) =>
+      prev.map((org) =>
+        org.orgId === orgId
+          ? { ...org, orgStatus: newStatus }
+          : org
+      )
+    );
   };
+
+
+
 
   return (
     <Blank title="Organization">
@@ -145,28 +122,6 @@ const Organization: React.FC = () => {
         <p className="text-gray-600 mt-2">Manage and monitor your organization</p>
       </div>
 
-      {/* Search and Create */}
-      {/* <div className="mb-6">
-        <div className="flex justify-end gap-4">
-          <div className="w-[420px]">
-            <SearchBar
-              value={searchTerm}
-              onChange={handleInputChange}
-              onSearch={handleSearch}
-              placeholder="Search by Organization ID or Name..."
-              searchbtn={true}
-              loading={loading}
-            />
-          </div>
-
-          <button
-            onClick={handleCreateOrganization}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
-          >
-            Create Organization
-          </button>
-        </div>
-      </div> */}
       <div className="flex justify-end gap-4">
         <div className="w-[420px]">
             <SearchBar
@@ -209,7 +164,11 @@ const Organization: React.FC = () => {
       )}
 
       {/* Table */}
-      <UserTable orgData={paginatedData} />
+      <UserTable 
+        orgData={paginatedData} 
+        onToggleStatus={handleToggleStatus} 
+      />
+
 
       {/* Pagination */}
       {totalPages > 1 && (

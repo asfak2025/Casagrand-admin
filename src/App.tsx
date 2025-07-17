@@ -54,6 +54,8 @@ import GetAllPhones from "./pages/Phone/getAllPhones";
 import Notification from "./pages/User/Notification";
 import UploadFile from "./pages/FileUpload/UploadFile";
 import Organization from "./pages/Organization/Organization ";
+import OrgById from "./pages/Organization/orgById";
+import AgentById from "./pages/Organization/OrgAgent";
 export default function App() {
 
 
@@ -147,6 +149,8 @@ export default function App() {
 
               {/* Casa Grand Admin Page*/}
               <Route path="/organization" element={<Organization />} />
+              <Route path="/orgbyid" element={<OrgById />} />
+              <Route path="/agentbyid" element={<AgentById />} />
               
             </Route>
 

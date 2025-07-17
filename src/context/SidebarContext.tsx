@@ -72,6 +72,7 @@ const navItems: NavItem[] = [
     icon: <Building2 />,
     subItems: [
       { name: "Organization", path: "/organization", pro: false },
+      { name: "Org by Id", path: "/orgbyid", pro: false },
       
     ],
   },

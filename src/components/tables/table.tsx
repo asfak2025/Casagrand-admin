@@ -32,7 +32,7 @@ function TableComponent({
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 mt-6">
       {/* Table Container */}
        <div
-      className={`rounded-lg ${borderNone ? "border-none" : "border border-gray-200 shadow-md"} h-[63vh] overflow-auto relative ${scrollbarHide ? "scrollbar-hide" : ""} ${className}`}
+      className={`rounded-lg ${borderNone ? "border-none" : "border border-gray-200 shadow-md"}  min-h-min overflow-auto relative ${scrollbarHide ? "scrollbar-hide" : ""} ${className}`}
       style={{ scrollbarWidth: "thin" }}
     >
         <Table className="w-full">
