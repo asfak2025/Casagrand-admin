@@ -150,7 +150,6 @@ const OrgById: React.FC = () => {
                             placeholder="Search organization..."
                             searchbtn={true}
                             loading={loading}
-                            bodycls="w-80"
                         />
                     </div>
                 </div>

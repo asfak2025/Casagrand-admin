@@ -8,7 +8,7 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import { useNavigate } from "react-router-dom";
 //import Checkbox from "../form/input/Checkbox";
-//import { useAlert } from "../../context/alertContext";
+// import { useAlert } from "../../context/alertContext";
 import Button from "../ui/button/Button";
 import { useAppContext } from "../../context/appContext";
 import { saveToLocalStorage } from "../encryption/encryption";
@@ -20,43 +20,42 @@ export default function SignInForm() {
   const [password,setPassword] = useState<string>('');
 
   const {URL}=useAppContext()
-  // const [isChecked, setIsChecked] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
   // const {alert,showAlert,hideAlert}=useAlert()
 
   async function  handleSignIn(e:React.FormEvent) {
     e.preventDefault()
-      navigation('/home')
 
-    console.log(email)
-    // try{
-    //   console.log('hello')
-    //   const response = await fetch(`${URL}admin/login`,{
-    //   method:"POST",
-    //   headers:{
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body:JSON.stringify({email:email,password:password})
-    // })
-    //  if(response.status === 200){
-    //   const data = await response.json()
-    //   console.log(data)
-    //   localStorage.setItem("token",data.access_token)
-    //   localStorage.setItem("roleType",data.roleType)
-    //   localStorage.setItem("roleId",data.roleId)
-    //   localStorage.setItem("name",data.full_name)
-    //   localStorage.setItem("email",email)
-    //   saveToLocalStorage('roleType',data.roleType)
-    //   saveToLocalStorage('accessRoles',data.accessRoles)
-    //   navigation('/home')
+    console.log("LOGIN URL:", `${URL}admin/login`);
+    try{
+      console.log('email',email,'password',password)
+      const response = await fetch(`${URL}admin/login`,{
+      method:"POST",
+      headers:{
+        'Content-Type': 'application/json',
+      },
+      body:JSON.stringify({email:email,password:password})
+    })
+    console.log("==========>",response)
+     if(response.status === 200){
+      const data = await response.json()
+      console.log(data)
+      console.log('success')
+      localStorage.setItem("token",data.token)
+      localStorage.setItem("roleType",data.role)
+      localStorage.setItem("roleId",data.adminId)
+      localStorage.setItem("email",email)
+      navigation('/home')
       
-    // }else{
-    //   // setIsChecked(true)
-    //   console.log('invalid credentials')
-    //   toast.error("Invalid Credentials")
-    // }
-    // }catch(e){
-    //   console.log(e)
-    // }
+    }else{
+      setIsChecked(true)
+      console.log('invalid credentials')
+      toast.error("Invalid Credentials")
+    }
+    }catch(e){
+      console.log('error')
+      console.log(e)
+    }
     
     
   }
