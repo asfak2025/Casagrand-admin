@@ -56,6 +56,7 @@ import UploadFile from "./pages/FileUpload/UploadFile";
 import Organization from "./pages/Organization/Organization ";
 import OrgById from "./pages/Organization/orgById";
 import AgentById from "./pages/Organization/OrgAgent";
+import DistrictsTable from "./pages/Organization/districts";
 export default function App() {
 
 
@@ -151,6 +152,7 @@ export default function App() {
               <Route path="/organization" element={<Organization />} />
               <Route path="/orgbyid" element={<OrgById />} />
               <Route path="/agentbyid" element={<AgentById />} />
+              <Route path="/districts" element={<DistrictsTable />} />
               
             </Route>
 

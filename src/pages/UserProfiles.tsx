@@ -13,42 +13,42 @@ export default function UserProfiles() {
   const {adminProfile,setAdmin} = useAppContext()
   const logOut = useLogOut()
 
-  async function getAdminDetails(){
-    try{
+  // async function getAdminDetails(){
+  //   try{
 
     
-    const roleId = localStorage.getItem('roleId')
-    const {URL} =useAppContext()
-    const token = localStorage.getItem('token')
-    if(!token){
-            toast.error("Not authorised")
-            logOut()
-        }
-    const response = await fetch(`${URL}admin/${roleId}`,{
-      method:"GET",
-      headers:{ 'Content-Type': 'application/json',
-        "Authorization": `Bearer ${token}`,
-      }
-    })
-    if(response.ok){
-      const data = await response.json()
-      console.log("hello",data)
-      setAdmin(data.admin)
+  //   const roleId = localStorage.getItem('roleId')
+  //   const {URL} =useAppContext()
+  //   const token = localStorage.getItem('token')
+  //   if(!token){
+  //           toast.error("Not authorised")
+  //           logOut()
+  //       }
+  //   const response = await fetch(`${URL}admin/${roleId}`,{
+  //     method:"GET",
+  //     headers:{ 'Content-Type': 'application/json',
+  //       "Authorization": `Bearer ${token}`,
+  //     }
+  //   })
+  //   if(response.ok){
+  //     const data = await response.json()
+  //     console.log("hello",data)
+  //     setAdmin(data.admin)
      
       
-    }
-    else{
-      toast.error('error fetching data')
-    }
-    }catch(e){
-      toast.error(`Error occured ${e}`)
-    }
+  //   }
+  //   else{
+  //     toast.error('error fetching data')
+  //   }
+  //   }catch(e){
+  //     toast.error(`Error occured ${e}`)
+  //   }
     
-  } 
+  // } 
 
-  useEffect(()=>{
-    getAdminDetails()
-  },[])
+  // useEffect(()=>{
+  //   getAdminDetails()
+  // },[])
   return (
     <>
       <PageMeta

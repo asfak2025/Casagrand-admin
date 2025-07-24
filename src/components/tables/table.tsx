@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table/index";
+import { ThHTMLAttributes } from 'react'
 
 interface TableComponentProps {
   header: string[];
@@ -18,6 +19,16 @@ interface TableComponentProps {
   scrollbarHide?: boolean;
 }
 
+export interface TableHeadProps extends ThHTMLAttributes<HTMLTableCellElement> {}
+export function TableHead({ className, ...props }: TableHeadProps) {
+  function cn(arg0: string, className: string | undefined): string | undefined {
+    throw new Error("Function not implemented.");
+  }
+
+  return (
+    <th className={cn('px-4 py-3 text-sm font-semibold text-left text-gray-700', className)} {...props} />
+  )
+}
 function TableComponent({
   header,
   data,
