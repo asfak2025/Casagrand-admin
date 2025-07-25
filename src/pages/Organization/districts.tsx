@@ -6,6 +6,7 @@ import Button from '../../components/ui/button/Button';
 import { DeleteConfirmModal } from '../../components/Modal/deleteModal';
 import { useNavigate } from 'react-router-dom';
 import {Modal} from '../../components/ui/modal';
+import {  Pencil } from 'lucide-react';
 
 interface District {
   districtId: string;
@@ -24,11 +25,14 @@ const DistrictsTable = () => {
   const [isSearchMode, setIsSearchMode] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [districtToDelete, setDistrictToDelete] = useState<District | null>(null);
-const[createDistrict,setCreateDistrict]=useState<boolean>(false);
 const navigate = useNavigate();
 const [newDistrictName, setNewDistrictName] = useState('');
 const [createError, setCreateError] = useState('');
 const [showCreateModal, setShowCreateModal] = useState(false);
+const [editDistrict, setEditDistrict] = useState<District | null>(null);
+const [editDistrictName, setEditDistrictName] = useState('');
+const [showEditModal, setShowEditModal] = useState(false);
+const [updateError, setUpdateError] = useState('');
 
 
 
@@ -64,7 +68,7 @@ const [showCreateModal, setShowCreateModal] = useState(false);
     setShowCreateModal(false);
     setNewDistrictName('');
     setPage(1);
-    fetchDistricts();
+    // fetchDistricts();
     }
     catch (err) {
     setCreateError((err as Error).message);
@@ -110,6 +114,57 @@ const [showCreateModal, setShowCreateModal] = useState(false);
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
     };
   }, []);
+
+const handleUpdateDistrict = async () => {
+  if (!editDistrictName.trim()) {
+    setUpdateError('District name is required');
+    return;
+  }
+
+  if (!editDistrict) return;
+
+  setLoading(true);
+  setUpdateError('');
+  try {
+    const response = await fetch('http://192.168.1.17:8000/api/district/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        orgId,
+        districtId: editDistrict.districtId,
+        name: editDistrictName,
+      }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.detail || 'Failed to update district');
+    }
+
+    setShowEditModal(false);
+    setEditDistrict(null);
+    setPage(1);
+    // isSearchMode ? performSearch(searchTerm) : fetchDistricts();
+  } catch (err) {
+    setUpdateError((err as Error).message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() =>{
+  if(editDistrict){
+    setEditDistrictName(editDistrict.name);
+  setShowEditModal(true);
+
+  }
+  else{
+    setEditDistrictName('');
+  }
+}, [editDistrict]);
 
   useEffect(() => {
     if (!isSearchMode) fetchDistricts();
@@ -187,9 +242,7 @@ const [showCreateModal, setShowCreateModal] = useState(false);
     }
   };
 
-  const handleCreateDistrict=() =>{
-    setCreateDistrict(true);
-  }
+ 
 
   const formatDate = (dateString: string) => {
     try {
@@ -227,50 +280,73 @@ const [showCreateModal, setShowCreateModal] = useState(false);
       </div>
      
       <div className="overflow-x-auto">
-        <Table className="w-full">
-          <TableHeader className="bg-gray-50">
-            <TableRow>
-              <TableHead>District Name</TableHead>
-              <TableHead>District ID</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody >
-            {loading ? (
-              <TableRow><td colSpan={4} className="text-center py-6">Loading...</td></TableRow>
-            ) : error ? (
-              <TableRow><td colSpan={4} className="text-center py-6 text-red-500">{error}</td></TableRow>
-            ) : districts.length === 0 ? (
-              <TableRow><td colSpan={4} className="text-center py-6">No districts found.</td></TableRow>
-            ) : (
-              districts.map((district) => (
-                <tr
-  key={district.districtId}
-  onClick={() => navigate(`/constituencies/${district.districtId}`)}
-  className="cursor-pointer hover:bg-gray-100"
+     <Table className="w-[600px] border border-gray-200 rounded-md overflow-hidden text-sm">
+  <TableHeader className="bg-gray-100 text-gray-700 uppercase text-xs tracking-wider">
+    <TableRow>
+      <TableHead className="px-4 py-3 text-left">District Name</TableHead>
+      <TableHead className="px-4 py-3 text-left">District ID</TableHead>
+      <TableHead className="px-4 py-3 text-left">Created</TableHead>
+      <TableHead className="px-4 py-3 text-left">Actions</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    {loading ? (
+      <TableRow>
+        <td colSpan={4} className="text-center py-6">Loading...</td>
+      </TableRow>
+    ) : error ? (
+      <TableRow>
+        <td colSpan={4} className="text-center py-6 text-red-500">{error}</td>
+      </TableRow>
+    ) : districts.length === 0 ? (
+      <TableRow>
+        <td colSpan={4} className="text-center py-6">No districts found.</td>
+      </TableRow>
+    ) : (
+      districts.map((district) => (
+        <TableRow
+          key={district.districtId}
+          onClick={() => navigate(`/constituencies?districtId=${district.districtId}`)}
+          className="cursor-pointer hover:bg-gray-50 transition"
+        >
+          <td className="px-4 py-3 max-w-xs truncate">{district.name}</td>
+          <td className="px-4 py-3 font-mono">{district.districtId}</td>
+          <td className="px-4 py-3">{formatDate(district.createdAt)}</td>
+          <td className="px-4 py-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDistrictToDelete(district);
+                setShowDeleteModal(true);
+              }}
+              className="text-red-600 hover:text-red-800"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+            <Button
+  variant="ghost"
+  size="sm"
+  onClick={(e) => {
+  e.stopPropagation();
+    setEditDistrict(district);
+    setEditDistrictName(district.name);
+    setUpdateError('');
+    setShowEditModal(true);
+  }}
+  className="text-blue-600 hover:text-blue-800 mr-1"
 >
-                  <td>{district.name}</td>
-                  <td className="font-mono">{district.districtId}</td>
-                  <td>{formatDate(district.createdAt)}</td>
-                  <td>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setDistrictToDelete(district);
-                        setShowDeleteModal(true);
-                      }}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </TableBody>
-        </Table>
+  <Pencil className="w-4 h-4" />
+</Button>
+
+          </td>
+        </TableRow>
+      ))
+    )}
+  </TableBody>
+</Table>
+
       </div>
     </div>
   );
@@ -283,13 +359,29 @@ const [showCreateModal, setShowCreateModal] = useState(false);
   onClick={() => navigate(`/constituencies?districtId=${district.districtId}`)}
   className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition"
 >
+  <Button
+  variant="ghost"
+  size="sm"
+  onClick={(e) => {
+    e.stopPropagation();
+    setEditDistrict(district);
+    setEditDistrictName(district.name);
+    setUpdateError('');
+    setShowEditModal(true);
+  }}
+  className="text-blue-600 hover:text-blue-800 mr-1"
+>
+  <Pencil className="w-4 h-4" />
+</Button>
+
           <h3 className="text-lg font-semibold">{district.name}</h3>
           <p className="text-sm text-gray-500">ID: <span className="font-mono">{district.districtId}</span></p>
           <p className="text-sm text-gray-500">Created: {formatDate(district.createdAt)}</p>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setDistrictToDelete(district);
               setShowDeleteModal(true);
             }}
@@ -370,6 +462,33 @@ const [showCreateModal, setShowCreateModal] = useState(false);
         </Button>
         <Button variant="primary" onClick={createDistricthandler}>
           Create
+        </Button>
+      </div>
+    </div>
+  </Modal>
+)}
+
+{showEditModal && (
+  <Modal  className='max-w-2/5 max-h-1/2' isOpen={showEditModal} onClose={() => setShowEditModal(false)}>
+    <div className="p-6 max-w-md mx-auto w-full">
+      <h2 className="text-xl font-semibold mb-4">Edit District</h2>
+
+      <input
+        type="text"
+        value={editDistrictName}
+        onChange={(e) => setEditDistrictName(e.target.value)}
+        placeholder="Enter district name"
+        className="w-full border border-gray-300 px-3 py-2 rounded mb-3"
+      />
+
+      {updateError && <p className="text-red-500 mb-2">{updateError}</p>}
+
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={() => setShowEditModal(false)}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={handleUpdateDistrict}>
+          Save
         </Button>
       </div>
     </div>
