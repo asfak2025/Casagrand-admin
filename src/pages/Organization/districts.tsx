@@ -5,6 +5,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from '../../compon
 import Button from '../../components/ui/button/Button';
 import { DeleteConfirmModal } from '../../components/Modal/deleteModal';
 import { useNavigate } from 'react-router-dom';
+import {Modal} from '../../components/ui/modal';
 
 interface District {
   districtId: string;
@@ -25,13 +26,52 @@ const DistrictsTable = () => {
   const [districtToDelete, setDistrictToDelete] = useState<District | null>(null);
 const[createDistrict,setCreateDistrict]=useState<boolean>(false);
 const navigate = useNavigate();
+const [newDistrictName, setNewDistrictName] = useState('');
+const [createError, setCreateError] = useState('');
+const [showCreateModal, setShowCreateModal] = useState(false);
 
 
 
-  const orgId = 'cfc16989-2d30-4273-8bd0-37cf913bdba6';
+
+   const orgId = 'cfc16989-2d30-4273-8bd0-37cf913bdba6';
   const token = localStorage.getItem('token') || '';
 
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const createDistricthandler= async() =>{
+    if (!newDistrictName.trim()){
+      setCreateError('district name is required');
+      return;
+    }
+    setLoading(true);
+    setCreateError('')
+    try {
+      const response =await fetch('http://192.168.1.17:8000/api/district/create',{
+        method: 'POST',
+        headers:{
+          "content-Type": 'application/json',
+          "authorization": `Bearear ${token}`,
+        },
+        body: JSON.stringify({
+          orgId,
+          name: newDistrictName
+        })
+      });
+      if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.detail || 'Failed to create district');
+    }
+    setShowCreateModal(false);
+    setNewDistrictName('');
+    setPage(1);
+    fetchDistricts();
+    }
+    catch (err) {
+    setCreateError((err as Error).message);
+  } finally {
+    setLoading(false);
+  }
+}; 
 
   const fetchDistricts = useCallback(async () => {
     if (isSearchMode) return;
@@ -165,9 +205,19 @@ const navigate = useNavigate();
 
   const TableView = () => (
     <div className="bg-white rounded-lg shadow overflow-hidden">
+      
       <div className="flex justify-end items-center mb-4 px-4 pt-4">
+        <div className="flex items-center space-x-2 px-3">
+         <Button
+  variant="primary"
+  onClick={() => setShowCreateModal(true)}
+  
+>
+  + Add District
+</Button>
+</div>
         <SearchBar
-          placeholder="Search by district name or ID"
+          placeholder="Search by district "
           value={searchTerm}
           onChange={handleInputChange}
           loading={loading}
@@ -175,6 +225,7 @@ const navigate = useNavigate();
           searchbtn={true}
         />
       </div>
+     
       <div className="overflow-x-auto">
         <Table className="w-full">
           <TableHeader className="bg-gray-50">
@@ -185,7 +236,7 @@ const navigate = useNavigate();
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody >
             {loading ? (
               <TableRow><td colSpan={4} className="text-center py-6">Loading...</td></TableRow>
             ) : error ? (
@@ -229,7 +280,7 @@ const navigate = useNavigate();
       {districts.map((district) => (
         <div
   key={district.districtId}
-  onClick={() => navigate(`/constituencies/${district.districtId}`)}
+  onClick={() => navigate(`/constituencies?districtId=${district.districtId}`)}
   className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition"
 >
           <h3 className="text-lg font-semibold">{district.name}</h3>
@@ -298,6 +349,32 @@ const navigate = useNavigate();
         <span>{isSearchMode ? 'Search Results' : `Page ${page}`}</span>
         <span>{districts.length} district(s) shown</span>
       </div>
+{showCreateModal && (
+  <Modal className='max-w-2/5 max-h-1/2' isOpen={showCreateModal} onClose={() => setShowCreateModal(false)}>
+    <div className="p-6 max-w-md mx-auto w-full">
+      <h2 className="text-xl font-semibold mb-4">Create New District</h2>
+
+      <input
+        type="text"
+        value={newDistrictName}
+        onChange={(e) => setNewDistrictName(e.target.value)}
+        placeholder="Enter district name"
+        className="w-full border border-gray-300 px-3 py-2 rounded mb-3"
+      />
+
+      {createError && <p className="text-red-500 mb-2">{createError}</p>}
+
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={() => setShowCreateModal(false)}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={createDistricthandler}>
+          Create
+        </Button>
+      </div>
+    </div>
+  </Modal>
+)}
 
       <DeleteConfirmModal
         isOpen={showDeleteModal}
