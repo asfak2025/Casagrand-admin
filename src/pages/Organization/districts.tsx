@@ -316,11 +316,17 @@ useEffect(() =>{
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
+              // onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+              //   e.stopPropagation();
+              //   setDistrictToDelete(district);
+              //   setShowDeleteModal(true);
+              // }}
+
+              onClick={(e:any) => {
                 e.stopPropagation();
                 setDistrictToDelete(district);
                 setShowDeleteModal(true);
-              }}
+              }}  
               className="text-red-600 hover:text-red-800"
             >
               <Trash2 className="w-4 h-4" />
@@ -328,7 +334,7 @@ useEffect(() =>{
             <Button
   variant="ghost"
   size="sm"
-  onClick={(e) => {
+  onClick={(e:any) => {
   e.stopPropagation();
     setEditDistrict(district);
     setEditDistrictName(district.name);
@@ -362,7 +368,7 @@ useEffect(() =>{
   <Button
   variant="ghost"
   size="sm"
-  onClick={(e) => {
+  onClick={(e:any) => {
     e.stopPropagation();
     setEditDistrict(district);
     setEditDistrictName(district.name);
@@ -380,7 +386,7 @@ useEffect(() =>{
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => {
+            onClick={(e:any) => {
               e.stopPropagation();
               setDistrictToDelete(district);
               setShowDeleteModal(true);
