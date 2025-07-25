@@ -4,6 +4,7 @@ import SearchBar from '../../components/ui/SearchBar';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import Button from '../../components/ui/button/Button';
 import { DeleteConfirmModal } from '../../components/Modal/deleteModal';
+import { useNavigate } from 'react-router-dom';
 
 interface District {
   districtId: string;
@@ -22,9 +23,13 @@ const DistrictsTable = () => {
   const [isSearchMode, setIsSearchMode] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [districtToDelete, setDistrictToDelete] = useState<District | null>(null);
+const[createDistrict,setCreateDistrict]=useState<boolean>(false);
+const navigate = useNavigate();
+
+
 
   const orgId = 'cfc16989-2d30-4273-8bd0-37cf913bdba6';
-  const token = 'your_token_here';
+  const token = localStorage.getItem('token') || '';
 
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,7 +65,7 @@ const DistrictsTable = () => {
   }, [orgId, token, page, isSearchMode]);
 
   useEffect(() => {
-    fetchDistricts();
+    // fetchDistricts();
     return () => {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
     };
@@ -142,6 +147,10 @@ const DistrictsTable = () => {
     }
   };
 
+  const handleCreateDistrict=() =>{
+    setCreateDistrict(true);
+  }
+
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-US', {
@@ -185,7 +194,11 @@ const DistrictsTable = () => {
               <TableRow><td colSpan={4} className="text-center py-6">No districts found.</td></TableRow>
             ) : (
               districts.map((district) => (
-                <tr key={district.districtId}>
+                <tr
+  key={district.districtId}
+  onClick={() => navigate(`/constituencies/${district.districtId}`)}
+  className="cursor-pointer hover:bg-gray-100"
+>
                   <td>{district.name}</td>
                   <td className="font-mono">{district.districtId}</td>
                   <td>{formatDate(district.createdAt)}</td>
@@ -214,7 +227,11 @@ const DistrictsTable = () => {
   const CardsView = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {districts.map((district) => (
-        <div key={district.districtId} className="bg-white rounded-lg shadow p-4">
+        <div
+  key={district.districtId}
+  onClick={() => navigate(`/constituencies/${district.districtId}`)}
+  className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition"
+>
           <h3 className="text-lg font-semibold">{district.name}</h3>
           <p className="text-sm text-gray-500">ID: <span className="font-mono">{district.districtId}</span></p>
           <p className="text-sm text-gray-500">Created: {formatDate(district.createdAt)}</p>
