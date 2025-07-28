@@ -1,19 +1,17 @@
 // types.ts
 export interface OrgMember {
-  memberId: string;
-  memberName: string;
-  memberEmail: string;
-  memberPassword: string;
-  memberStatus: 'active' | 'inactive';
-  role: string[];
-  created_at: string;
-  updated_at: string;
+  member_id: string;
+  member_name: string;  
+  member_email: string;
+  member_status: string;
+  member_role: string;
+  member_joined_date: string;
 }
 
 export interface OrganizationData {
   orgId: string;
   orgName: string;
-  orgStatus: 'ACTIVE' | 'INACTIVE';
+  orgStatus: string;
   orgLogo: string;
   orgMembers: OrgMember[];
   orgSupportAccess: string[];
@@ -47,7 +45,6 @@ export interface TabContentProps {
   data: OrganizationData;
   onEdit: (section: string) => void;
   formatDate: (date: string) => string;
-  getStatusColor: (status: string) => string;
   showPassword: Record<string, boolean>;
   setShowPassword: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }

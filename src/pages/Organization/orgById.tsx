@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Building, Users, FileText, CreditCard, UserCheck } from 'lucide-react';
-
+import { useLogOut } from '../../hooks/useLogOut';
 import { OrganizationData, Tab, TabKey, LocationState } from '../../components/orgById/types';
-
+import { toast } from "react-toastify";
 import { mockOrgDataMap } from '../../components/orgById/data';
 
 
@@ -19,14 +19,17 @@ import {
 } from '../../components/orgById/orgTabs';
 import SearchBar from '../../components/ui/SearchBar';
 import Blank from '../../components/ui/Blank';
+import { useAppContext } from '../../context/appContext';
 
 
 const OrgById: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { URL } = useAppContext();
     const state = location.state as LocationState;
-
-    const [orgId, setOrgId] = useState<string>(state?.orgId || '');
+    const [orgId, setOrgId] = useState<string>();
+    const token = localStorage.getItem('token');
+    const logOut = useLogOut();
     const [loading, setLoading] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<TabKey>('overview');
     const [data, setData] = useState<OrganizationData | null>(null);
@@ -41,6 +44,47 @@ const OrgById: React.FC = () => {
         { id: 'billing', label: 'Billing', icon: <CreditCard className="h-4 w-4" /> }
     ];
 
+    useEffect(() => {
+        const storedOrgId = localStorage.getItem('orgId');
+        if (state && state?.orgId) {
+            fetchUserData(token as string, state?.orgId);
+            setOrgId(state.orgId)
+        }
+        else if (storedOrgId) {
+            fetchUserData(token as string, storedOrgId);
+            setOrgId(storedOrgId);
+        }
+    }, []);
+
+    const fetchUserData = async (token: string, orgId: string) => {
+        console.log("Fetching user data with token:", token);
+        setLoading(true);
+        try {
+            const response = await fetch(`${URL}org/getOrgById/${orgId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.status === 200) {
+                const userData = await response.json();
+                setData(userData);
+                console.log("Fetched user data:", userData);
+            } else if (response.status === 401 || response.status === 403) {
+                toast.error('Unauthorized access. Logging out...');
+                logOut();
+            } else {
+                toast.error(`User Not Found`);
+            }
+        } catch (error) {
+            toast.error('Failed to fetch user data:');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSearch = async (e?: React.MouseEvent | React.KeyboardEvent): Promise<void> => {
         if (e) e.preventDefault();
         const str = orgId ?? "";
@@ -48,31 +92,39 @@ const OrgById: React.FC = () => {
         if (!trimmedTerm) return;
 
         setLoading(true);
+
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 300));
+            const response = await fetch(`${URL}org/searchOrg`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+                },
+                body: JSON.stringify({ searchTerm: trimmedTerm }),
+            });
 
-            // In real implementation, make API call here
-            // const response = await fetch(`/api/organizations/${trimmedTerm}`);
-            // const orgData = await response.json();
-
-            const orgData = mockOrgDataMap[trimmedTerm];
-            if (orgData) {
-                setData(orgData);
+            if (response.status === 200) {
+                const data = await response.json();
+                console.log("Search Results:", data);
+                setData(Array.isArray(data.results) ? data.results[0] : []);
+            } else if (response.status === 401 || response.status === 403) {
+                toast.error('Unauthorized access. Logging out...');
+                logOut();
             } else {
-                setData(null);
-                console.error('Organization not found');
+                toast.error(`Organization Not Found`);
             }
-        } catch (error) {
-            console.error('Error fetching organization:', error);
+        } catch (err) {
+            toast.error('Search failed.');
         } finally {
             setLoading(false);
         }
+        console.log("org data:", data);
     };
 
     const handleEdit = (section: string): void => {
         console.log(`Edit ${section}`);
-        // Navigate to edit page or open modal
+        
     };
 
     const formatDate = (dateString: string): string => {
@@ -83,16 +135,6 @@ const OrgById: React.FC = () => {
         });
     };
 
-    const getStatusColor = (status: string): string => {
-        switch (status.toLowerCase()) {
-            case 'active':
-                return 'bg-green-100 text-green-800';
-            case 'inactive':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
 
     const renderTabContent = (): React.ReactNode => {
         if (!data) return null;
@@ -101,7 +143,6 @@ const OrgById: React.FC = () => {
             data,
             onEdit: handleEdit,
             formatDate,
-            getStatusColor,
             showPassword,
             setShowPassword
         };
@@ -144,12 +185,13 @@ const OrgById: React.FC = () => {
                     {/* Search Bar */}
                     <div className="mt-4 sm:mt-0 sm:ml-4">
                         <SearchBar
-                            value={orgId}
+                            value={orgId ?? ""}
                             onChange={setOrgId}
                             onSearch={handleSearch}
                             placeholder="Search organization..."
                             searchbtn={true}
                             loading={loading}
+                            bodycls='w-full sm:w-110'
                         />
                     </div>
                 </div>
@@ -188,7 +230,7 @@ const OrgById: React.FC = () => {
                     <div className="text-gray-500">
                         <Search className="h-12 w-12 mx-auto mb-4" />
                         <p>Search for an organization to view details</p>
-                        <p className="text-sm mt-2">Try searching for: "1234567890" (Casagrand) or "1234567891" (TVK)</p>
+                        <p className="text-sm mt-2">Try searching for: "orgId" or "name"</p>
                     </div>
                 </div>
             )}

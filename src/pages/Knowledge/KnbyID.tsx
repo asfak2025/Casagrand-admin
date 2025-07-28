@@ -106,7 +106,7 @@ const handleUpdate = async (updateValues) => {
       if (!resp.ok) throw new Error("Failed to fetch knowledge details");
 
       const data = await resp.json();
-      localStorage.setItem("orgId",orgId)
+      // localStorage.setItem("orgId",orgId)
       localStorage.setItem("knId",knId)
       setKnDetails(data);
       setError("");

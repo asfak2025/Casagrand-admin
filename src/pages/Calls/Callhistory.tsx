@@ -61,7 +61,7 @@ const Callhistory: React.FC = () => {
        // toast.success("Tools fetched successfully");
        
   setOrgIdStore(orgIdFilter); // ✅ Save to state
-  localStorage.setItem("orgId", orgIdFilter); // ✅ Save to localStorage
+  // localStorage.setItem("orgId", orgIdFilter); // ✅ Save to localStorage
       }
       //setCallHistory(data.data || []);
       //setCurrentPage(1); // Reset to first page
