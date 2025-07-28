@@ -14,7 +14,6 @@ import Switch from '../form/switch/Switch';
 import ConfirmModal from '../Modal/confirmModal';
 import { useNavigate } from 'react-router-dom';
 
-
 export const TabButton: React.FC<TabButtonProps> = ({ tab, isActive, onClick }) => (
     <button
         onClick={onClick}
@@ -51,22 +50,18 @@ export const OrganizationHeader: React.FC<{ data: OrganizationData }> = ({ data 
                             }`}>
                             {data.orgStatus}
                         </span>
-                        <span className="text-sm text-gray-500">
+                        {/* <span className="text-sm text-gray-500">
                             {data.orgMembers.length} members
-                        </span>
+                        </span> */}
                     </div>
                 </div>
             </div>
 
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                <Edit className="h-4 w-4" />
-                Edit Organization
-            </button>
         </div>
     );
 };
 
-export const OverviewTab: React.FC<TabContentProps> = ({ data, onEdit, formatDate, getStatusColor }) => (
+export const OverviewTab: React.FC<TabContentProps> = ({ data, onEdit, formatDate }) => (
     <div className="space-y-6">
         <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Organization Overview</h2>
@@ -82,40 +77,42 @@ export const OverviewTab: React.FC<TabContentProps> = ({ data, onEdit, formatDat
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-gray-50 p-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Organization ID</label>
-                <p className="text-gray-900">{data.orgId}</p>
+                <p className="text-gray-900">{data?.orgId}</p>
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Organization Name</label>
-                <p className="text-gray-900">{data.orgName}</p>
+                <p className="text-gray-900">{data?.orgName}</p>
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(data.orgStatus)}`}>
-                    {data.orgStatus}
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${data?.orgStatus.toLowerCase() === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800 '}`}>
+                    {data?.orgStatus}
                 </span>
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Total Members</label>
-                <p className="text-gray-900">{data.orgMembers.length}</p>
+                <p className="text-gray-900">{data.orgMembers?.length}</p>
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Active Members</label>
-                <p className="text-gray-900">{data.orgMembers.filter(m => m.memberStatus === 'active').length}</p>
+                <p className="text-gray-900">{data?.orgMembers?.filter(m => m.member_status?.toLowerCase() === 'active').length}</p>
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Organization Logo</label>
-                <img src={data.orgLogo} alt="Logo" className="h-12 w-90 rounded object-cover" />
+                <img src={data?.orgLogo} alt="Logo" className="h-12 w-90 rounded object-cover" />
             </div>
         </div>
     </div>
 );
 
-export const MembersTab: React.FC<TabContentProps> = ({ data, onEdit, formatDate, getStatusColor, showPassword, setShowPassword }) => (
+export const MembersTab: React.FC<TabContentProps> = ({ data, onEdit, formatDate, showPassword, setShowPassword }) => (
     <div className="space-y-6">
         <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Organization Members</h2>
@@ -141,48 +138,51 @@ export const MembersTab: React.FC<TabContentProps> = ({ data, onEdit, formatDate
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {data.orgMembers.map((member: OrgMember) => (
-                        <tr key={member.memberId}>
+                    {/* {data.orgMembers.map((member: OrgMember) => ( */}
+                    {data.orgMembers.map((member: any) => (
+                        <tr key={member.member_id}>
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                     <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                                         <span className="text-sm font-medium text-gray-700">
-                                            {member.memberName.charAt(0)}
+                                            {member.member_name.charAt(0)}
                                         </span>
                                     </div>
                                     <div className="ml-4">
-                                        <div className="text-sm font-medium text-gray-900">{member.memberName}</div>
-                                        <div className="text-sm text-gray-500">{member.memberId}</div>
+                                        <div className="text-sm font-medium text-gray-900">{member.member_name}</div>
+                                        <div className="text-sm text-gray-500">{member.member_id}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.memberEmail}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.member_email}</td>
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                                    {member.role.join(', ')}
+                                    {member.member_role}
                                 </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(member.memberStatus)}`}>
-                                    {member.memberStatus}
+                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${member.member_status.toLowerCase() === 'active'
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'}`}>
+                                    {member.member_status}
                                 </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 <div className="flex items-center gap-2">
-                                    <span>{showPassword[member.memberId] ? member.memberPassword : '••••••'}</span>
+                                    <span>{showPassword[member.member_id] ? member.member_password : '••••••'}</span>
                                     <button
                                         onClick={() => setShowPassword(prev => ({
                                             ...prev,
-                                            [member.memberId]: !prev[member.memberId]
+                                            [member.member_id]: !prev[member.member_id]
                                         }))}
                                         className="text-gray-400 hover:text-gray-600"
                                     >
-                                        {showPassword[member.memberId] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        {showPassword[member.member_id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
                                 </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {formatDate(member.created_at)}
+                                {formatDate(member.member_join_date)}
                             </td>
                         </tr>
                     ))}
@@ -209,7 +209,7 @@ export const AccessTab: React.FC<TabContentProps> = ({ data, onEdit }) => (
             <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Admin Access</h3>
                 <div className="space-y-2">
-                    {data.orgAdminAccess.map((access: string, index: number) => (
+                    {data?.orgAdminAccess?.map((access: string, index: number) => (
                         <div key={index} className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             <span className="text-sm text-gray-700">{access}</span>
@@ -221,7 +221,7 @@ export const AccessTab: React.FC<TabContentProps> = ({ data, onEdit }) => (
             <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Support Access</h3>
                 <div className="space-y-2">
-                    {data.orgSupportAccess.map((access: string, index: number) => (
+                    {data?.orgSupportAccess?.map((access: string, index: number) => (
                         <div key={index} className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             <span className="text-sm text-gray-700">{access}</span>
@@ -233,7 +233,7 @@ export const AccessTab: React.FC<TabContentProps> = ({ data, onEdit }) => (
             <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Collection Access</h3>
                 <div className="space-y-2">
-                    {data.orgCollectionAccess.map((access: string, index: number) => (
+                    {data?.orgCollectionAccess?.map((access: string, index: number) => (
                         <div key={index} className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                             <span className="text-sm text-gray-700">{access}</span>
@@ -326,7 +326,7 @@ export const AgentsTab: React.FC<TabContentProps> = ({ data, onEdit }) => {
                 </button>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -375,7 +375,7 @@ export const AgentsTab: React.FC<TabContentProps> = ({ data, onEdit }) => {
                 message={`Are you sure you want to ${modalState.pendingStatus === 'ACTIVE' ? 'activate' : 'deactivate'} this agent?`}
                 onCancel={cancelToggle}
                 onConfirm={confirmToggle}
-            />
+            /> */}
         </div>
     );
 };
@@ -511,7 +511,7 @@ export const AgentsTab: React.FC<TabContentProps> = ({ data, onEdit }) => {
 //     </div>
 //   );
 // };
-export const BillingTab: React.FC<TabContentProps> = ({ data, onEdit, formatDate, getStatusColor }) => {
+export const BillingTab: React.FC<TabContentProps> = ({ data, onEdit, formatDate }) => {
   // Get billing data for the current organization
   const billingInfo = billingData[data.orgId];
   

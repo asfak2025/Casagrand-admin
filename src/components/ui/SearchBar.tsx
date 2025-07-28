@@ -52,3 +52,50 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, onSearch,placeho
 };
 
 export default SearchBar;
+
+
+// interface SearchBarProps {
+//   placeholder: string;
+//   value: string;
+//   onChange: (value: string) => void;
+//   loading?: boolean;
+//   onSearch?: () => void;
+//   searchbtn?: boolean;
+// }
+
+// const SearchBar = ({
+//   placeholder,
+//   value,
+//   onChange,
+//   loading = false,
+//   onSearch,
+//   searchbtn = true,
+// }: SearchBarProps) => {
+//   return (
+//     <div className="relative">
+//       <input
+//         type="text"
+//         placeholder={placeholder}
+//         value={value}
+//         onChange={(e) => onChange(e.target.value)}
+//         className="pl-4 pr-10 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+//       />
+//       {loading && (
+//         <div className="absolute right-3 top-2.5">
+//           <div className="animate-spin h-4 w-4 border-b-2 border-blue-600 rounded-full"></div>
+//         </div>
+//       )}
+//       {searchbtn && onSearch && (
+//         <button
+//           onClick={onSearch}
+//           className="absolute right-2 top-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg font-medium transition-colors duration-200"
+//           disabled={loading}
+//         >
+//           Search
+//         </button>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default SearchBar;

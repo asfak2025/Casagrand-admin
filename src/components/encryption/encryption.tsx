@@ -48,11 +48,11 @@ const excludeKeys = ["token"];
 // Save to localStorage
 export const saveToLocalStorage = (key: string, value: any, handleError?: HandleErrorFn): void => {
   if (excludeKeys.includes(key)) {
-    localStorage.setItem(key, value);
+    // localStorage.setItem(key, value);
   } else {
     const encryptedData = encryptData(value, handleError);
     if (encryptedData) {
-      localStorage.setItem(key, encryptedData);
+      // localStorage.setItem(key, encryptedData);
     }
   }
 };

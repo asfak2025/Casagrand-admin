@@ -44,8 +44,8 @@ const ApiKey = () => {
       }
       if(orgId){
           setSearchTerm(orgId)
-          fetchApiKeys(orgId);
-          localStorage.setItem('orgId', orgId);
+          // fetchApiKeys(orgId);
+          // localStorage.setItem('orgId', orgId);
       }
   }, []);
 
@@ -172,7 +172,7 @@ const ApiKey = () => {
       await fetchApiKeys('');
       return;
     }
-    localStorage.setItem('orgId', trimmedTerm);
+    // localStorage.setItem('orgId', trimmedTerm);
     await fetchApiKeys(trimmedTerm);
   };
   

@@ -160,7 +160,7 @@ const Kn: React.FC = () => {
       setTotalPages(Math.ceil(data.total / limit));
       setPage(pageNumber);
       setCanCreate(true);
-      localStorage.setItem("orgId", orgIdFilter);
+      // localStorage.setItem("orgId", orgIdFilter);
     } catch (error: unknown) {
       alert(error instanceof Error ? error.message : 'Unexpected error occurred');
     } finally {
