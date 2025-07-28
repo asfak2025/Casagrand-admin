@@ -355,13 +355,14 @@ useEffect(() =>{
                   <td className="px-6 py-4 text-gray-600">
                     {formatDate(district.createdAt)}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="flex items-center space-x-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e:any) => {
-                          e.stopPropagation();
+                        onClick={() => {
                           setEditDistrict(district);
                           setEditDistrictName(district.name);
                           setUpdateError('');
@@ -374,8 +375,7 @@ useEffect(() =>{
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e:any) => {
-                          e.stopPropagation();
+                        onClick={() => {
                           setDistrictToDelete(district);
                           setShowDeleteModal(true);
                         }}  
@@ -450,12 +450,14 @@ useEffect(() =>{
                     {district.name}
                   </h3>
                 </div>
-                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div 
+                  className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e:any) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       setEditDistrict(district);
                       setEditDistrictName(district.name);
                       setUpdateError('');
@@ -468,8 +470,7 @@ useEffect(() =>{
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e:any) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       setDistrictToDelete(district);
                       setShowDeleteModal(true);
                     }}

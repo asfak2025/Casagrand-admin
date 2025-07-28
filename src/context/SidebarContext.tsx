@@ -73,8 +73,9 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Organization", path: "/organization", pro: false },
       { name: "Org by Id", path: "/orgbyid", pro: false },
-      {name: "Districts",path:"/districts",pro:false}
-      
+      {name: "Districts",path:"/districts",pro:false},
+      {name: "Constituencies", path: "/constituencies", pro:false},
+      {name: "Consti By Id", path: "/constiById", pro:false}
     ],
   },
   // Uncomment if needed
