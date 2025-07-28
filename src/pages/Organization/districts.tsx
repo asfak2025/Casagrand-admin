@@ -84,6 +84,7 @@ const [updateError, setUpdateError] = useState('');
     setLoading(true);
     setError('');
     try {
+      console.log("Fetching districts for orgId:", orgId, "page:", page);
       const response = await fetch(
         `http://192.168.1.17:8000/api/district/all?orgId=${orgId}&page=${page}`,
         {
@@ -257,6 +258,15 @@ useEffect(() =>{
     }
   };
 
+  const handleNavigateToConstituencies = (districtId: string) => {
+  if (!districtId) {
+    console.error('No districtId provided for navigation');
+    return;
+  }
+  console.log('Navigating with districtId:', districtId); // Debug log
+  navigate(`/constituencies?districtId=${encodeURIComponent(districtId)}`);
+};
+
   const TableView = () => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       
@@ -327,7 +337,7 @@ useEffect(() =>{
               districts.map((district, index) => (
                 <TableRow
                   key={district.districtId}
-                  onClick={() => navigate(`/constituencies?districtId=${district.districtId}`)}
+                 onClick={() => handleNavigateToConstituencies(district.districtId)}
                   className={`cursor-pointer hover:bg-gray-50 transition-colors duration-150 ${
                     index !== districts.length - 1 ? 'border-b border-gray-100' : ''
                   }`}
@@ -431,7 +441,7 @@ useEffect(() =>{
           {districts.map((district) => (
             <div
               key={district.districtId}
-              onClick={() => navigate(`/constituencies?districtId=${district.districtId}`)}
+              onClick={() => handleNavigateToConstituencies(district.districtId)}
               className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 p-6 cursor-pointer transition-all duration-200 hover:-translate-y-1 group"
             >
               <div className="flex justify-between items-start mb-4">
