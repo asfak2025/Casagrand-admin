@@ -1,29 +1,24 @@
-'use client';
+import { useRef, useEffect, useCallback } from 'react';
 
-let timer: ReturnType<typeof setTimeout> | null = null;
+export function useDebounce<T extends (...args: any[]) => void>(
+  callback: T,
+  delay = 300
+): (...args: Parameters<T>) => void {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-export function debounceApiCall<T>(
-  fn: (...args: any[]) => Promise<T> | void,
-  delay: number = 500
-): (...args: any[]) => void {
-  return (...args: any[]): void => {
-    const [event] = args;
+  const debouncedFn = useCallback((...args: Parameters<T>) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    // Persist the synthetic event
-    if (event && typeof event === 'object' && 'persist' in event && typeof event.persist === 'function') {
-      event.persist();
-    }
-
-    // Prevent default immediately
-    if (event && typeof event.preventDefault === 'function') {
-      event.preventDefault();
-    }
-
-    // Debounce the API function
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn(...args);
+    timeoutRef.current = setTimeout(() => {
+      callback(...(args as Parameters<T>));
     }, delay);
-  };
-}
+  }, [callback, delay]);
 
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  return debouncedFn;
+}
