@@ -23,6 +23,7 @@ const Constituencies = () => {
   const [districtName, setDistrictName] = useState<string>('');
   
   const { districtId } = useParams();
+  console.log(useParams(),"hdghdsgfh");
   const location = useLocation();
   const limit = 10;
 
@@ -31,47 +32,102 @@ const Constituencies = () => {
 
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchConstituencies = useCallback(async () => {
-    if (isSearchMode || !districtId) return;
+  // const fetchConstituencies = useCallback(async () => {
+  //   if (isSearchMode || !districtId) return;
 
-    setLoading(true);
-    setError('');
-    try {
-      const response = await fetch(
-        `http://192.168.1.25:8000/api/district/getAll-constituency`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            orgId,
-            districtId,
-            page,
-            limit
-          }),
-        }
-      );
+  //   setLoading(true);
+  //   setError('');
+  //   try {
+  //     const response = await fetch(
+  //       `http://192.168.1.25:8000/api/district/getAll-constituency`,
+  //       {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({
+  //           orgId,
+  //           districtId,
+  //           page,
+  //           limit
+  //         }),
+  //       }
+  //     );
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
+  //     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  //     const data = await response.json();
 
-      setConstituencies(data.constituencies || []);
-      setHasMore((data.constituencies || []).length === limit);
+  //     setConstituencies(data.constituencies || []);
+  //     setHasMore((data.constituencies || []).length === limit);
       
-      if (location.state?.districtName) {
-        setDistrictName(location.state.districtName);
-      }
-    } catch (err) {
-      setError(`Failed to fetch constituencies: ${(err as Error).message}`);
-      setConstituencies([]);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId, token, page, isSearchMode, districtId, limit, location.state]);
+  //     if (location.state?.districtName) {
+  //       setDistrictName(location.state.districtName);
+  //     }
+  //   } catch (err) {
+  //     setError(`Failed to fetch constituencies: ${(err as Error).message}`);
+  //     setConstituencies([]);
+  //     setHasMore(false);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [orgId, token, page, isSearchMode, districtId, limit, location.state]);
 
+
+  const fetchConstituencies = useCallback(async () => {
+  if (!districtId) {
+    console.error("District ID is missing");
+    return;
+  }
+
+  console.log("Fetching constituencies for district:", districtId); // Debug log
+
+  setLoading(true);
+  setError('');
+  try {
+    const response = await fetch(
+      `http://192.168.1.25:8000/api/district/getAll-constituency`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          orgId,
+          districtId,
+          page,
+          limit
+        }),
+      }
+    );
+
+    console.log("API Response status:", response.status); // Debug log
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("API Error:", errorData); // Debug log
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("API Data:", data); // Debug log
+
+    setConstituencies(data.constituencies || []);
+    setHasMore(data.constituencies?.length === limit);
+    
+    if (location.state?.districtName) {
+      setDistrictName(location.state.districtName);
+    }
+  } catch (err) {
+    console.error("Fetch error:", err); // Debug log
+    setError(`Failed to fetch constituencies: ${(err as Error).message}`);
+    setConstituencies([]);
+    setHasMore(false);
+  } finally {
+    setLoading(false);
+  }
+}, [orgId, token, page, districtId, limit, location.state]);
   useEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
@@ -263,3 +319,4 @@ const Constituencies = () => {
 };
 
 export default Constituencies;
+
