@@ -59,6 +59,7 @@ import AgentById from "./pages/Organization/OrgAgent";
 import DistrictsTable from "./pages/Organization/districts";
 import Constituencies from "./pages/Organization/constituencies";
 import ConstiById from "./pages/Organization/constiById";
+import CallLogs from "./pages/Organization/callLogs";
 export default function App() {
 
 
@@ -158,6 +159,7 @@ export default function App() {
               <Route path="/constituencies" element={<Constituencies />} />
               <Route path="/constituencies/:districtId" element={<Constituencies />} />
               <Route path="/constiById" element={<ConstiById />} />
+              <Route path="/callLogs" element={<CallLogs />} />
             </Route>
 
             {/* Auth Layout */}

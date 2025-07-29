@@ -1,256 +1,272 @@
-import React, { useState, useEffect } from 'react';
-import Blank from '../../components/ui/Blank';
-import SearchBar from '../../components/ui/SearchBar';
-import UserTable from '../../components/User/UserTable';
-import Pagination from '../../components/common/Pagination';
-import CreateOrganizationModal from '../../components/Organization/orgModal';
-import { useNavigate } from "react-router-dom";
-import { useAppContext } from '../../context/appContext';
-import { useLogOut } from '../../hooks/useLogOut';
-import { toast } from 'react-toastify'
+  "use client";
 
-export type Organization = {
-  orgId: string;
-  orgName: string;
-  orgEmail?: string;
-  orgStatus: string;
-  orgLogo?: string;
-};
-export type OrganizationCreation = {
-  orgName: string;
-  orgEmail?: string;
-  orgLogo?: string;
-};
-
-const CallLogs: React.FC = () => {
-  const navigation = useNavigate();
-  const { URL } = useAppContext();
-  const logOut = useLogOut();
-
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const itemsPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  import React, { useEffect, useMemo, useState } from "react";
+  import { ChevronLeft, ChevronRight, Phone, CheckCircle, AlertTriangle, Search } from "lucide-react";
+  import { useAppContext } from "../../context/appContext";
+  import { debounce } from "../../utils/debounce";
 
 
-  const fetchAllOrgs = async (page: number, limit: number) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${URL}org/getAllOrg?page=${page}&limit=${limit}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-        },
-      });
+  interface DistrictResult {
+    key: string;
+    callLogsLength: number;
+    positivePercentage: number;
+    negativePercentage: number;
+    districtName: string;
+  }
 
-      if (response.status === 200) {
-        const data = await response.json();
-        console.log("Fetched Organizations:", data);
-        setOrganizations(data.organizations || []);
-        setTotalPages(Math.ceil(data.total / limit));
-      } else if (response.status === 401 || response.status === 403) {
-        console.log('Unauthorized access. Logging out...');
-        logOut();
-      } else {
-        toast.error('Failed to fetch organizations');
+  interface ApiResponse {
+    groupBy: string;
+    results: DistrictResult[];
+    totalGroups: number;
+    overallStats: {
+      totalCalls: number;
+      positivePercentage: number;
+      negativePercentage: number;
+    };
+  }
+
+
+  const Dashboard: React.FC = () => {
+    const { URL } = useAppContext();
+    const [apiData, setApiData] = useState<ApiResponse | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [limit] = useState(9);
+
+    const fetchAnalytics = async (page: number = 1) => {
+      setLoading(true);
+      setError(null);
+      console.log("Fetching analytics data...");
+      try {
+        const payload = {
+          groupBy: "districtId",
+          page,
+          limit,
+        };
+
+        const response = await await fetch(`${URL}call/call-analytics`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+        if (response?.ok) {
+          const data: ApiResponse = await response.json();
+          setApiData(data);
+          console.log("Analytics Data:", data);
+        } else {
+          setError("Failed to fetch analytics data");
+        }
+      } catch (err) {
+        setError("Error fetching analytics data");
+        console.error("Analytics fetch error:", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-
-  const handleSearch = async (e?: React.MouseEvent | React.KeyboardEvent): Promise<void> => {
-    if (e) e.preventDefault();
-    const trimmedTerm = searchTerm.trim().toLowerCase();
-    setLoading(true);
-    setError('');
-    console.log("Search Term:", trimmedTerm);
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      const response = await fetch(`${URL}org/searchOrg`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-        },
-        body: JSON.stringify({ searchTerm: trimmedTerm }),
-      });
-
-      if (response.status === 200) {
-        const data = await response.json();
-        console.log("Search Results:", data);
-        setOrganizations(Array.isArray(data.results) ? data.results : []);
-      } else if (response.status === 401 || response.status === 403) {
-        toast.error('Unauthorized access. Logging out...');
-        logOut();
+    useEffect(() => {
+      console.log("Search term changed:", searchTerm);
+      if (searchTerm.trim() === "") {
+        fetchAnalytics(currentPage);
       } else {
-        toast.error(`Organization Not Found`);
+        debouncedSearch(searchTerm);
       }
-      // setCurrentPage(1);
-      // setTotalPages(Math.ceil(data.length / itemsPerPage));
-    } catch (err) {
-      toast.error('Search failed.');
-    } finally {
-      setLoading(false);
+    }, [ searchTerm, currentPage ]);
+
+    const searchAnalytics = async (term: string) => {
+      setLoading(true);
+      try {
+        const payload = {
+          searchTerm: term,
+          mode: "district",
+          page: 1,
+          limit: 10,
+        };
+
+        const response = await fetch(`${URL}call/search-logs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        const newData = await response.json();
+        if (response.status === 200) {
+          setApiData((prev) => ({
+            ...prev!,
+            results: newData.results,
+            totalGroups: newData.totalGroups,
+          }));
+        } else {
+          setApiData(null);
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const debouncedSearch = debounce(searchAnalytics, 1000);
+
+
+    const filteredDistricts = useMemo(() => {
+      if (!apiData?.results) return [];
+      return apiData.results.filter(
+        (d) =>
+          d.districtName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          d.key.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }, [apiData, searchTerm]);
+
+    const totalPages = apiData ? Math.ceil(apiData.totalGroups / limit) : 0;
+
+    const handlePageChange = (newPage: number) => {
+      if (newPage >= 1 && newPage <= totalPages) {
+        setCurrentPage(newPage);
+      }
+    };
+
+    if (!apiData) {
+      return (
+        <div className="max-w-7xl mx-auto py-20 text-center text-gray-500">
+          <AlertTriangle className="h-10 w-10 mx-auto mb-4 text-gray-400" />
+          No district analytics available
+        </div>
+      );
     }
-  };
 
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      handleSearch();
-    }
-    else {
-      fetchAllOrgs(currentPage, itemsPerPage);
-    }
-  }, [statusFilter, currentPage]);
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+          <div className="border rounded-lg p-4 shadow-sm">
+            <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
+              <span>Total Call Logs</span>
+              <Phone className="h-4 w-4 text-blue-600" />
+            </div>
+            <div className="text-2xl font-bold text-blue-600">
+              {apiData.overallStats.totalCalls.toLocaleString()}
+            </div>
+          </div>
 
+          <div className="border rounded-lg p-4 shadow-sm">
+            <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
+              <span>Positive Feedback</span>
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </div>
+            <div className="text-2xl font-bold text-green-600">
+              {apiData.overallStats.positivePercentage.toFixed(1)}%
+            </div>
+          </div>
 
-  useEffect(() => {
-    const filtered = statusFilter === 'ALL'
-      ? organizations
-      : organizations.filter(org => org.orgStatus === statusFilter);
-    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-  }, [organizations, statusFilter]);
+          <div className="border rounded-lg p-4 shadow-sm">
+            <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
+              <span>Negative Feedback</span>
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+            </div>
+            <div className="text-2xl font-bold text-red-600">
+              {apiData.overallStats.negativePercentage.toFixed(1)}%
+            </div>
+          </div>
+        </div>
 
+        {/* Search + Results */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Districts ({filteredDistricts.length})
+          </h2>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search districts..."
+              className="pl-10 pr-4 py-2 border rounded-md w-72"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
 
-  const handleInputChange = (value: string): void => {
-    setSearchTerm(value);
-    if (!value.trim()) {
-      fetchAllOrgs(1, itemsPerPage);
-    }
-  };
+        {filteredDistricts.length === 0 ? (
+          <div className="text-center text-gray-500 py-10">
+            <AlertTriangle className="h-10 w-10 mx-auto mb-4 text-gray-400" />
+            No matching districts found.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredDistricts.map((district) => (
+              <div
+                key={district.key}
+                className="border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer"
+                onClick={() =>
+                  console.log(`Navigate to district ${district.key}`) // Replace with actual navigation logic
+                  // router.push(
+                  //   `/operationTvk/TvkConstiCard?districtId=${district.key}&districtName=${district.districtName}`
+                  // )
+                }
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {district.districtName}
+                  </h3>
+                  <span className="text-xs text-gray-500">{district.key}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-center mt-4">
+                  <div>
+                    <div className="text-xl font-bold text-blue-600">
+                      {district.callLogsLength}
+                    </div>
+                    <div className="text-xs text-gray-500">Calls</div>
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-green-600">
+                      {district.positivePercentage.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-gray-500">Positive</div>
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-red-600">
+                      {district.negativePercentage.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-gray-500">Negative</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-  const handleCreateOrganization = (): void => {
-    setIsCreateModalOpen(true);
-  };
+        {/* Pagination */}
+        {filteredDistricts.length > 0 && !searchTerm && totalPages > 1 && (
+          <div className="flex items-center justify-between mt-8">
+            <button
+              className="text-sm px-3 py-1 border rounded disabled:opacity-50"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+            >
+              <ChevronLeft className="inline h-4 w-4" /> Prev
+            </button>
 
-  const handleCreateSubmit = async (newOrg: Omit<OrganizationCreation, 'orgId'>): Promise<void> => {
-    console.log('Creating organization:', newOrg);
-    fetchAllOrgs(currentPage, itemsPerPage);
-  };
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </div>
 
-  const handleToggleStatus = async (orgId: string, newStatus: 'ACTIVE' | 'INACTIVE') => {
-    setOrganizations((prev) =>
-      prev.map((org) =>
-        org.orgId === orgId ? { ...org, orgStatus: newStatus } : org
-      )
+            <button
+              className="text-sm px-3 py-1 border rounded disabled:opacity-50"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+            >
+              Next <ChevronRight className="inline h-4 w-4" />
+            </button>
+          </div>
+        )}
+      </div>
     );
-    try {
-      const response = await fetch(`${URL}org/updateOrg`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-        },
-        body: JSON.stringify({ orgId, orgStatus: newStatus }),
-      });
-
-      if (response.status === 200) {
-        toast.success(`Organization status updated to ${newStatus}`);
-        fetchAllOrgs(currentPage, itemsPerPage);
-      } else if (response.status === 401 || response.status === 403) {
-        logOut();
-      } else {
-        toast.error('Failed to create organization');
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Something went wrong.');
-    }
   };
 
-  // const paginatedData = organizations.slice(
-  //   (currentPage - 1) * itemsPerPage,
-  //   currentPage * itemsPerPage
-  // );
-  const filteredOrganizations = statusFilter === 'ALL'
-    ? organizations
-    : organizations.filter(org => org.orgStatus === statusFilter);
-
-  const paginatedData = filteredOrganizations.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-
-
-  return (
-    <Blank title="Call Logs">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Call Log Management</h1>
-        <p className="text-gray-600 mt-2">Manage your call logs</p>
-      </div>
-
-      <div className="flex justify-end gap-4">
-        <div className="w-[420px] mr-4">
-          <SearchBar
-            value={searchTerm}
-            onChange={handleInputChange}
-            onSearch={handleSearch}
-            placeholder="Search by Organization ID or Name..."
-            searchbtn={true}
-            loading={loading}
-            bodycls='w-110'
-          />
-        </div>
-
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as 'ALL' | 'ACTIVE' | 'INACTIVE')}
-          className="border px-3 py-2 rounded-md text-sm text-gray-700"
-        >
-          <option value="ALL">ALL</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="INACTIVE">INACTIVE</option>
-        </select>
-
-        <button
-          onClick={handleCreateOrganization}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-        >
-          Create Organization
-        </button>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600">{error}</p>
-        </div>
-      )}
-
-      <UserTable orgData={paginatedData} onToggleStatus={handleToggleStatus} />
-
-      {totalPages > 1 && (
-        <Pagination
-          totalPages={totalPages}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          maxVisiblePages={5}
-        />
-      )}
-
-      <CreateOrganizationModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateSubmit}
-      />
-
-    </Blank>
-  );
-};
-
-
-
-
-export default CallLogs;
+  export default Dashboard;
