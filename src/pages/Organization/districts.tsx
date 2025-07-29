@@ -264,7 +264,12 @@ useEffect(() =>{
     return;
   }
   console.log('Navigating with districtId:', districtId); // Debug log
-  navigate(`/constituencies?districtId=${(districtId)}`);
+  // navigate(`/constituencies?districtId=${(districtId)}`);
+    navigate(`/constituencies`, {
+    state: {
+      districtId:districtId
+    }
+  });
 };
 
   const TableView = () => (
